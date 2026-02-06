@@ -13,8 +13,9 @@ COPY frontend/ ./frontend/
 # Set working directory to backend
 WORKDIR /app/backend
 
-# Expose port
-EXPOSE 8000
+# Railway uses dynamic PORT - default to 8080
+ENV PORT=8080
+EXPOSE 8080
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application with dynamic port
+CMD python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT

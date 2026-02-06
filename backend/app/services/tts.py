@@ -3,34 +3,48 @@ import logging
 import os
 from typing import Optional
 
-from google.cloud import texttospeech
-
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
+# Try to import Google Cloud TTS, but don't fail if not available
+try:
+    from google.cloud import texttospeech
+    GOOGLE_TTS_AVAILABLE = True
+except ImportError:
+    GOOGLE_TTS_AVAILABLE = False
+    logger.warning("Google Cloud TTS not available - using browser TTS fallback")
+
 
 class TTSService:
     def __init__(self):
         self.client = None
+        self.enabled = False
         self._initialize_client()
 
     def _initialize_client(self):
+        if not GOOGLE_TTS_AVAILABLE:
+            logger.info("Google Cloud TTS library not installed - using browser TTS")
+            return
+
         try:
             # Set credentials path if provided
-            if settings.google_cloud_credentials_path:
-                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = settings.google_cloud_credentials_path
-
-            self.client = texttospeech.TextToSpeechClient()
-            logger.info("Google Cloud TTS client initialized successfully")
+            creds_path = settings.google_cloud_credentials_path
+            if creds_path and os.path.exists(creds_path):
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+                self.client = texttospeech.TextToSpeechClient()
+                self.enabled = True
+                logger.info("Google Cloud TTS client initialized successfully")
+            else:
+                logger.info("Google Cloud credentials not configured - using browser TTS")
         except Exception as e:
-            logger.error(f"Failed to initialize Google Cloud TTS client: {e}")
-            logger.info("TTS will be disabled - audio will not be generated")
+            logger.warning(f"Google Cloud TTS not available: {e}")
+            logger.info("Using browser TTS fallback")
 
     async def synthesize_speech(self, text: str) -> Optional[str]:
-        if not self.client:
-            logger.warning("TTS client not available, skipping audio generation")
+        if not self.client or not self.enabled:
+            # Return None - frontend will use browser TTS
             return None
 
         if not text or text.startswith("Error"):
@@ -72,7 +86,7 @@ class TTSService:
             return None
 
     def get_available_voices(self, language_code: str = "es") -> list:
-        if not self.client:
+        if not self.client or not self.enabled or not GOOGLE_TTS_AVAILABLE:
             return []
 
         try:

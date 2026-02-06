@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Credentials
+credentials/
+*.json
+!package.json
+!manifest.json
+!railway.json
+
+# Logs
+*.log
+
+# Local files
+manual/
+*.png
+*.jpeg
+*.jpg

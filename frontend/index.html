@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a2e">
+    <meta name="description" content="Asistente visual para personas ciegas">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>OjosParaCiego</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header" role="banner">
+            <h1>OjosParaCiego</h1>
+            <div id="connection-status" class="status disconnected" aria-live="polite">
+                Desconectado
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="main-content" role="main">
+            <!-- Camera preview (hidden but functional) -->
+            <div class="camera-container" aria-hidden="true">
+                <video id="camera-preview" autoplay playsinline muted></video>
+                <canvas id="capture-canvas"></canvas>
+            </div>
+
+            <!-- Status display -->
+            <section class="status-section" aria-live="polite" aria-atomic="true">
+                <div id="current-mode" class="mode-display">
+                    Modo: <span id="mode-text">Inactivo</span>
+                </div>
+                <div id="last-response" class="response-display">
+                    <p id="response-text">Toca el botón para comenzar</p>
+                </div>
+            </section>
+
+            <!-- Control buttons -->
+            <section class="controls-section">
+                <button id="btn-navigation" class="control-btn primary-btn" aria-label="Iniciar modo navegación">
+                    <span class="btn-icon">🚶</span>
+                    <span class="btn-text">Navegación</span>
+                </button>
+
+                <button id="btn-search" class="control-btn secondary-btn" aria-label="Buscar objeto por voz">
+                    <span class="btn-icon">🔍</span>
+                    <span class="btn-text">Buscar</span>
+                </button>
+
+                <button id="btn-analyze" class="control-btn tertiary-btn" aria-label="Analizar escena actual">
+                    <span class="btn-icon">📷</span>
+                    <span class="btn-text">Analizar</span>
+                </button>
+
+                <button id="btn-stop" class="control-btn stop-btn hidden" aria-label="Detener">
+                    <span class="btn-icon">⏹</span>
+                    <span class="btn-text">Detener</span>
+                </button>
+            </section>
+
+            <!-- Voice input indicator -->
+            <div id="voice-indicator" class="voice-indicator hidden" aria-live="assertive">
+                <div class="voice-wave"></div>
+                <span>Escuchando...</span>
+            </div>
+        </main>
+
+        <!-- Audio player (hidden) -->
+        <audio id="audio-player" aria-hidden="true"></audio>
+
+        <!-- Loading overlay -->
+        <div id="loading-overlay" class="loading-overlay hidden" aria-hidden="true">
+            <div class="spinner"></div>
+            <p>Procesando...</p>
+        </div>
+
+        <!-- Error modal -->
+        <div id="error-modal" class="modal hidden" role="alertdialog" aria-labelledby="error-title">
+            <div class="modal-content">
+                <h2 id="error-title">Error</h2>
+                <p id="error-message"></p>
+                <button id="error-close" class="modal-btn">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- Permission request -->
+        <div id="permission-modal" class="modal" role="dialog" aria-labelledby="permission-title">
+            <div class="modal-content">
+                <h2 id="permission-title">Permisos necesarios</h2>
+                <p>Esta aplicación necesita acceso a:</p>
+                <ul>
+                    <li>📷 Cámara (para detectar obstáculos)</li>
+                    <li>🎤 Micrófono (para comandos de voz)</li>
+                </ul>
+                <button id="permission-grant" class="modal-btn primary">Permitir acceso</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/websocket.js"></script>
+    <script src="js/camera.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/app.js"></script>
+
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+</body>
+</html>

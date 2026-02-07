@@ -1,5 +1,4 @@
-import anthropic
-import base64
+from together import Together
 import logging
 from typing import Optional
 
@@ -45,9 +44,6 @@ EJEMPLOS:
 - "Persona a 2 metros, izquierda"
 - "Silla a 1 metro, derecha, rodéala"
 - "Pared al frente a 3 metros, gira derecha"
-- "Poste a 2 metros, centro, ve por izquierda"
-- "Perro a 1 metro, izquierda"
-- "Escaleras subiendo a 2 metros"
 
 RESPONDE SOLO LA INSTRUCCIÓN:"""
 
@@ -58,27 +54,22 @@ CONTEXTO: La imagen viene de una cámara frontal. El usuario no puede ver NADA.
 
 BUSCA CUIDADOSAMENTE:
 1. Examina TODA la imagen: izquierda, centro, derecha, arriba, abajo
-2. Busca el objeto exacto o similares (ej: si busca "vaso", incluye tazas, copas)
-3. Considera que puede estar parcialmente oculto o en segundo plano
+2. Busca el objeto exacto o similares
+3. Considera que puede estar parcialmente oculto
 
 SI ENCUENTRAS EL OBJETO:
 - Indica posición: izquierda / centro / derecha
-- Indica altura: en el suelo / a nivel de cintura / a nivel de ojos / arriba
 - Indica distancia aproximada en metros
 - Si está sobre algo, menciona qué (mesa, estante, suelo)
 
 SI NO LO VES:
-- Confirma que NO está visible en la imagen actual
-- Sugiere dirección para girar y seguir buscando
-- Alterna sugerencias: derecha, izquierda, atrás
+- Confirma que NO está visible
+- Sugiere dirección para girar
 
-EJEMPLOS DE RESPUESTAS:
+EJEMPLOS:
 - "{objeto} a la derecha, sobre la mesa, a 2 metros"
 - "{objeto} al frente, en el suelo, a 1 metro"
-- "{objeto} a la izquierda, estante alto, a 3 metros"
 - "No visible, gira a la derecha"
-- "No lo veo, prueba girando a la izquierda"
-- "{objeto} encontrado al centro, a nivel de cintura, 1 metro"
 
 RESPONDE SOLO LA INSTRUCCIÓN (máximo 20 palabras):"""
 
@@ -90,14 +81,14 @@ class VisionService:
 
     def _initialize_client(self):
         try:
-            api_key = settings.anthropic_api_key
+            api_key = settings.together_api_key
             if api_key:
-                self.client = anthropic.Anthropic(api_key=api_key)
-                logger.info("Anthropic client initialized successfully")
+                self.client = Together(api_key=api_key)
+                logger.info("Together AI client initialized successfully")
             else:
-                logger.warning("ANTHROPIC_API_KEY not set")
+                logger.warning("TOGETHER_API_KEY not set")
         except Exception as e:
-            logger.error(f"Failed to initialize Anthropic client: {e}")
+            logger.error(f"Failed to initialize Together AI client: {e}")
 
     async def analyze_image(
         self,
@@ -106,7 +97,7 @@ class VisionService:
         search_object: Optional[str] = None
     ) -> str:
         if not self.client:
-            logger.error("Anthropic client not initialized")
+            logger.error("Together AI client not initialized")
             return "Error: Servicio no disponible"
 
         try:
@@ -120,20 +111,17 @@ class VisionService:
             else:
                 prompt = NAVIGATION_PROMPT
 
-            # Call Claude Vision API
-            message = self.client.messages.create(
-                model=settings.claude_model,
-                max_tokens=settings.max_tokens,
+            # Call Together AI Vision API
+            response = self.client.chat.completions.create(
+                model=settings.vision_model,
                 messages=[
                     {
                         "role": "user",
                         "content": [
                             {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": "image/jpeg",
-                                    "data": image_base64
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{image_base64}"
                                 }
                             },
                             {
@@ -142,17 +130,15 @@ class VisionService:
                             }
                         ]
                     }
-                ]
+                ],
+                max_tokens=settings.max_tokens
             )
 
             # Extract text response
-            response_text = message.content[0].text.strip()
+            response_text = response.choices[0].message.content.strip()
             logger.info(f"Vision analysis: {response_text}")
             return response_text
 
-        except anthropic.APIError as e:
-            logger.error(f"Anthropic API error: {e}")
-            return "Error de conexión"
         except Exception as e:
             logger.error(f"Vision analysis error: {e}")
             return "Error al analizar"

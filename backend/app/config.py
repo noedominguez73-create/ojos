@@ -5,11 +5,11 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # API Keys
-    anthropic_api_key: str = ""
+    together_api_key: str = ""
     google_cloud_credentials_path: str = ""
 
-    # Claude Vision settings
-    claude_model: str = "claude-3-5-sonnet-20241022"
+    # Together AI Vision settings
+    vision_model: str = "meta-llama/Llama-Vision-Free"
     max_tokens: int = 300
 
     # TTS settings

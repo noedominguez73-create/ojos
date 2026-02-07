@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     google_cloud_credentials_path: str = ""
 
     # Claude Vision settings
-    claude_model: str = "claude-3-haiku-20240307"
-    max_tokens: int = 150
+    claude_model: str = "claude-3-5-sonnet-20241022"
+    max_tokens: int = 300
 
     # TTS settings
     tts_language: str = "es-ES"

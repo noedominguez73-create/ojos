@@ -11,21 +11,21 @@ class CameraManager {
         this.stream = null;
         this.isInitialized = false;
 
-        // Camera settings
+        // Camera settings - Higher resolution for better detection
         this.constraints = {
             video: {
                 facingMode: 'user', // Front camera
-                width: { ideal: 640 },
-                height: { ideal: 480 },
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
                 frameRate: { ideal: 15 }
             },
             audio: false
         };
 
-        // Capture settings
-        this.captureWidth = 640;
-        this.captureHeight = 480;
-        this.jpegQuality = 0.7;
+        // Capture settings - Higher quality for better AI analysis
+        this.captureWidth = 1280;
+        this.captureHeight = 720;
+        this.jpegQuality = 0.85;
     }
 
     async initialize() {

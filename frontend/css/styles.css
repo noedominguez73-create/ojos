@@ -225,6 +225,16 @@ body {
     background-color: #d32f2f;
 }
 
+.disconnect-btn {
+    background-color: #757575;
+    color: white;
+    grid-column: 1 / -1;
+}
+
+.disconnect-btn:hover {
+    background-color: #616161;
+}
+
 /* Voice indicator */
 .voice-indicator {
     position: fixed;

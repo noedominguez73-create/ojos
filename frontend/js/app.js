@@ -43,7 +43,8 @@ class OjosParaCiegoApp {
             errorMessage: document.getElementById('error-message'),
             errorClose: document.getElementById('error-close'),
             permissionModal: document.getElementById('permission-modal'),
-            permissionGrant: document.getElementById('permission-grant')
+            permissionGrant: document.getElementById('permission-grant'),
+            btnDisconnect: document.getElementById('btn-disconnect')
         };
 
         // Initialize
@@ -126,6 +127,11 @@ class OjosParaCiegoApp {
         // Permission grant button
         this.elements.permissionGrant.addEventListener('click', () => {
             this.requestPermissions();
+        });
+
+        // Disconnect button
+        this.elements.btnDisconnect.addEventListener('click', () => {
+            this.disconnect();
         });
 
         // Handle visibility change (pause when app goes to background)
@@ -365,6 +371,32 @@ class OjosParaCiegoApp {
 
     hideErrorModal() {
         this.elements.errorModal.classList.add('hidden');
+    }
+
+    disconnect() {
+        // Stop all active modes
+        this.stopAllModes();
+
+        // Disconnect WebSocket
+        if (this.wsManager) {
+            this.wsManager.disconnect();
+        }
+
+        // Stop camera
+        if (this.cameraManager) {
+            this.cameraManager.stop();
+        }
+
+        // Reset state
+        this.state.hasPermissions = false;
+        this.state.isConnected = false;
+
+        // Update UI
+        this.updateResponse('Desconectado. Toca Permitir acceso para reconectar.');
+        this.speechManager.speak('Desconectado');
+
+        // Show permission modal again
+        this.showPermissionModal();
     }
 }
 

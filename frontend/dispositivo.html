@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="Asistente visual para personas ciegas - Dispositivo">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <title>OjosParaCiego - Dispositivo</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png"
+        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header" role="banner">
+            <h1 id="view-title">Dispositivo</h1>
+        </header>
+
+        <!-- Main content -->
+        <main class="main-content" role="main">
+            <!-- VIEW: DEVICE -->
+            <section id="view-device" class="tab-view active-view">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Batería</h3>
+                        <span class="battery-percentage">--%</span>
+                    </div>
+                    <div class="battery-icon">
+                        <i class="fa-solid fa-battery-half"></i>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Volumen</h3>
+                    <div class="slider-container">
+                        <i class="fa-solid fa-volume-low"></i>
+                        <input type="range" class="slider" min="0" max="100" value="50">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </div>
+                </div>
+
+                <div class="card list-menu">
+                    <div class="list-item" id="btn-connect-glasses" tabindex="0" role="button"
+                        style="cursor: pointer; background: #eef2ff;">
+                        <span style="color: #246BFE; font-weight: 600;">Vincular Lentes (Bluetooth)</span>
+                        <i class="fa-brands fa-bluetooth-b" style="color: #246BFE;"></i>
+                    </div>
+                    <div class="list-item">
+                        <span>Red wifi</span>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+                    <div class="list-item">
+                        <span>Modo pendiente</span>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="switch-slider round"></span>
+                        </label>
+                    </div>
+                    <div class="list-item">
+                        <span>Información del dispositivo</span>
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <button id="btn-disconnect" class="full-width-btn" aria-label="Desconectar dispositivo">
+                    DETENER AVISO
+                </button>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-btn">
+                <i class="fa-solid fa-eye"></i>
+                <span>Control</span>
+            </a>
+            <a href="galeria.html" class="nav-btn">
+                <i class="fa-solid fa-images"></i>
+                <span>Galería</span>
+            </a>
+            <a href="dispositivo.html" class="nav-btn active">
+                <i class="fa-solid fa-mobile-screen"></i>
+                <span>Dispositivo</span>
+            </a>
+            <a href="ajustes.html" class="nav-btn">
+                <i class="fa-solid fa-gear"></i>
+                <span>Ajustes</span>
+            </a>
+        </nav>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnConnect = document.getElementById('btn-connect-glasses');
+            if (btnConnect) {
+                btnConnect.addEventListener('click', async () => {
+                    try {
+                        console.log('Solicitando dispositivo Bluetooth...');
+                        // Filtramos por M02 para encontrar los lentes y pedimos acceso a UUIDs comunes UART/BLE
+                        const device = await navigator.bluetooth.requestDevice({
+                            filters: [{ namePrefix: 'M02' }],
+                            optionalServices: [
+                                '0000ffe0-0000-1000-8000-00805f9b34fb',
+                                '0000ff10-0000-1000-8000-00805f9b34fb',
+                                '0000fff0-0000-1000-8000-00805f9b34fb'
+                            ]
+                        });
+
+                        console.log('Conectando al servidor...' + device.name);
+                        const server = await device.gatt.connect();
+
+                        console.log('¡Conectado! Obteniendo servicios...');
+                        const services = await server.getPrimaryServices();
+
+                        let svcList = services.map(s => s.uuid).join('\n');
+                        alert('¡BINGO! Vinculado correctamente a ' + device.name + '\n\nServicios Bluetooth detectados:\n' + svcList);
+
+                    } catch (error) {
+                        console.error('Error Web Bluetooth:', error);
+                        alert('Error de conexión:\n' + error.message);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

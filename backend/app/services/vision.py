@@ -1,4 +1,4 @@
-from together import Together
+import base64
 import logging
 from typing import Optional
 
@@ -76,19 +76,35 @@ RESPONDE SOLO LA INSTRUCCIÓN (máximo 20 palabras):"""
 
 class VisionService:
     def __init__(self):
-        self.client = None
-        self._initialize_client()
+        self.google_client = None
+        self.together_client = None
+        self.provider = settings.vision_provider
+        self._initialize_clients()
 
-    def _initialize_client(self):
-        try:
-            api_key = settings.together_api_key
-            if api_key:
-                self.client = Together(api_key=api_key)
-                logger.info("Together AI client initialized successfully")
-            else:
-                logger.warning("TOGETHER_API_KEY not set")
-        except Exception as e:
-            logger.error(f"Failed to initialize Together AI client: {e}")
+    def _initialize_clients(self):
+        # Try Google Gemini first (preferred)
+        if settings.google_api_key:
+            try:
+                import google.generativeai as genai
+                genai.configure(api_key=settings.google_api_key)
+                self.google_client = genai.GenerativeModel(settings.vision_model)
+                self.provider = "google"
+                logger.info(f"Google Gemini client initialized: {settings.vision_model}")
+            except Exception as e:
+                logger.error(f"Failed to initialize Google Gemini: {e}")
+
+        # Fallback to Together AI
+        if not self.google_client and settings.together_api_key:
+            try:
+                from together import Together
+                self.together_client = Together(api_key=settings.together_api_key)
+                self.provider = "together"
+                logger.info("Together AI client initialized as fallback")
+            except Exception as e:
+                logger.error(f"Failed to initialize Together AI: {e}")
+
+        if not self.google_client and not self.together_client:
+            logger.error("No vision API configured! Set GOOGLE_API_KEY or TOGETHER_API_KEY")
 
     async def analyze_image(
         self,
@@ -96,23 +112,62 @@ class VisionService:
         mode: AnalysisMode,
         search_object: Optional[str] = None
     ) -> str:
-        if not self.client:
-            logger.error("Together AI client not initialized")
-            return "Error: Servicio no disponible"
+        # Select prompt based on mode
+        if mode == AnalysisMode.SEARCH and search_object:
+            prompt = SEARCH_PROMPT_TEMPLATE.format(objeto=search_object)
+        else:
+            prompt = NAVIGATION_PROMPT
 
+        # Clean base64 string if it has data URL prefix
+        if "base64," in image_base64:
+            image_base64 = image_base64.split("base64,")[1]
+
+        # Use Google Gemini if available
+        if self.google_client:
+            return await self._analyze_with_google(image_base64, prompt)
+
+        # Fallback to Together AI
+        if self.together_client:
+            return await self._analyze_with_together(image_base64, prompt)
+
+        return "Error: Servicio de visión no configurado"
+
+    async def _analyze_with_google(self, image_base64: str, prompt: str) -> str:
         try:
-            # Clean base64 string if it has data URL prefix
-            if "base64," in image_base64:
-                image_base64 = image_base64.split("base64,")[1]
+            import google.generativeai as genai
 
-            # Select prompt based on mode
-            if mode == AnalysisMode.SEARCH and search_object:
-                prompt = SEARCH_PROMPT_TEMPLATE.format(objeto=search_object)
+            # Decode base64 to bytes
+            image_bytes = base64.b64decode(image_base64)
+
+            # Create image part
+            image_part = {
+                "mime_type": "image/jpeg",
+                "data": image_bytes
+            }
+
+            # Generate response
+            response = self.google_client.generate_content([prompt, image_part])
+
+            response_text = response.text.strip()
+            logger.info(f"Google Vision analysis: {response_text}")
+            return response_text
+
+        except Exception as e:
+            error_msg = str(e)
+            logger.error(f"Google Vision error: {error_msg}")
+
+            if "api_key" in error_msg.lower() or "invalid" in error_msg.lower():
+                return "Error: API key de Google inválida"
+            elif "quota" in error_msg.lower() or "limit" in error_msg.lower():
+                return "Error: Límite de API excedido"
+            elif "safety" in error_msg.lower():
+                return "Camino libre"  # Safety filter triggered, assume safe
             else:
-                prompt = NAVIGATION_PROMPT
+                return f"Error: {error_msg[:50]}"
 
-            # Call Together AI Vision API
-            response = self.client.chat.completions.create(
+    async def _analyze_with_together(self, image_base64: str, prompt: str) -> str:
+        try:
+            response = self.together_client.chat.completions.create(
                 model=settings.vision_model,
                 messages=[
                     {
@@ -134,21 +189,17 @@ class VisionService:
                 max_tokens=settings.max_tokens
             )
 
-            # Extract text response
             response_text = response.choices[0].message.content.strip()
-            logger.info(f"Vision analysis: {response_text}")
+            logger.info(f"Together Vision analysis: {response_text}")
             return response_text
 
         except Exception as e:
             error_msg = str(e)
-            logger.error(f"Vision analysis error: {error_msg}")
+            logger.error(f"Together Vision error: {error_msg}")
 
-            # Provide more specific error messages
-            if "api_key" in error_msg.lower() or "unauthorized" in error_msg.lower():
+            if "api_key" in error_msg.lower():
                 return "Error: API key inválida"
-            elif "rate" in error_msg.lower() or "limit" in error_msg.lower():
-                return "Error: Límite de API excedido"
             elif "model" in error_msg.lower():
                 return "Error: Modelo no disponible"
             else:
-                return f"Error al analizar: {error_msg[:50]}"
+                return f"Error: {error_msg[:50]}"

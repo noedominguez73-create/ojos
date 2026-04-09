@@ -6,10 +6,12 @@ from functools import lru_cache
 class Settings(BaseSettings):
     # API Keys
     together_api_key: str = ""
+    google_api_key: str = ""  # For Google Gemini Vision
     google_cloud_credentials_path: str = ""
 
-    # Together AI Vision settings
-    vision_model: str = "google/gemma-4-31B-it"
+    # Vision settings
+    vision_provider: str = "google"  # "google" or "together"
+    vision_model: str = "gemini-1.5-flash"  # or "gemini-1.5-pro"
     max_tokens: int = 300
 
     # TTS settings

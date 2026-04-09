@@ -31,45 +31,43 @@
 
         <!-- Main content -->
         <main class="main-content" role="main">
-            <!-- Camera preview -->
-            <div class="camera-container">
-                <video id="camera-preview" autoplay playsinline muted></video>
-                <canvas id="capture-canvas"></canvas>
-            </div>
+            <!-- Hidden canvas for capture -->
+            <canvas id="capture-canvas" style="display:none;"></canvas>
 
             <!-- VIEW: CONTROL -->
             <section id="view-control" class="tab-view active-view">
-                <div class="control-wrapper">
-                    <p class="instruction-text">Toca el botón para empezar con tu inteligencia artificial</p>
-
-                    <div id="current-mode" class="mode-display">
-                        <span id="mode-text">Inactivo</span>
-                    </div>
-
-                    <button id="btn-navigation" class="giant-assist-btn" aria-label="Activar asistencia visual">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-                    <p class="btn-subtext">Activar asistencia</p>
+                <div id="current-mode" class="mode-display">
+                    Modo: <span id="mode-text">Inactivo</span>
                 </div>
 
-                <!-- Status/Response display -->
-                <div class="response-wrapper">
-                    <div id="last-response" class="response-display">
+                <!-- Camera + Response combined display -->
+                <div class="vision-display">
+                    <video id="camera-preview" autoplay playsinline muted></video>
+                    <div id="response-overlay">
                         <p id="response-text">Esperando acción...</p>
                     </div>
+                </div>
 
-                    <button id="btn-stop" class="control-btn stop-btn hidden" aria-label="Detener">
-                        <i class="fa-solid fa-stop"></i> Detener
+                <!-- Action buttons -->
+                <div class="action-buttons">
+                    <button id="btn-navigation" class="action-btn navigation-btn" aria-label="Activar navegación">
+                        <i class="fa-solid fa-person-walking"></i>
+                        <span>Navegación</span>
+                    </button>
+                    <button id="btn-search" class="action-btn search-btn" aria-label="Buscar objeto">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span>Buscar</span>
                     </button>
                 </div>
 
-                <!-- Secondary actions -->
-                <div class="secondary-actions">
-                    <button id="btn-search" class="icon-btn" aria-label="Buscar objeto por voz">
-                        <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                <div class="action-buttons">
+                    <button id="btn-analyze" class="action-btn analyze-btn" aria-label="Analizar escena">
+                        <i class="fa-solid fa-camera"></i>
+                        <span>Analizar</span>
                     </button>
-                    <button id="btn-analyze" class="icon-btn" aria-label="Analizar escena actual">
-                        <i class="fa-solid fa-camera"></i> Analizar
+                    <button id="btn-stop" class="action-btn stop-btn hidden" aria-label="Detener">
+                        <i class="fa-solid fa-stop"></i>
+                        <span>Detener</span>
                     </button>
                 </div>
             </section>

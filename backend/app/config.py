@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     google_cloud_credentials_path: str = ""
 
     # Together AI Vision settings
-    vision_model: str = "meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo"
+    vision_model: str = "google/gemma-4-31B-it"
     max_tokens: int = 300
 
     # TTS settings

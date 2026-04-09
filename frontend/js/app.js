@@ -71,27 +71,33 @@ class OjosParaCiegoApp {
     }
 
     async init() {
-        console.log('Initializing OjosParaCiego Control View...');
+        console.log('Initializing OjosParaCiego...');
 
-        // Setup event listeners
-        this.setupEventListeners();
+        try {
+            // Initialize managers FIRST
+            this.wsManager = new WebSocketManager(this.config.wsUrl);
+            this.cameraManager = new CameraManager();
+            this.speechManager = new SpeechManager();
+            console.log('Managers created');
 
-        // Initialize managers
-        this.wsManager = new WebSocketManager(this.config.wsUrl);
-        this.cameraManager = new CameraManager();
-        this.speechManager = new SpeechManager();
+            // Setup WebSocket callbacks
+            this.wsManager.onStatusChange((status) => this.handleConnectionStatus(status));
+            this.wsManager.onMessage((data) => this.handleServerMessage(data));
 
-        // Setup WebSocket callbacks
-        this.wsManager.onStatusChange((status) => this.handleConnectionStatus(status));
-        this.wsManager.onMessage((data) => this.handleServerMessage(data));
+            // Setup speech callbacks
+            this.speechManager.onResult((transcript, confidence) => {
+                this.handleSpeechResult(transcript, confidence);
+            });
 
-        // Setup speech callbacks
-        this.speechManager.onResult((transcript, confidence) => {
-            this.handleSpeechResult(transcript, confidence);
-        });
+            // Setup event listeners AFTER managers
+            this.setupEventListeners();
+            console.log('Event listeners set up');
 
-        // Show permission modal
-        this.showPermissionModal();
+            // Show permission modal
+            this.showPermissionModal();
+        } catch (error) {
+            console.error('Init error:', error);
+        }
     }
 
     setupEventListeners() {
@@ -128,18 +134,18 @@ class OjosParaCiegoApp {
         }
 
         // Error modal close
-        if (this.elements.errorClose) {
-            this.elements.errorClose.addEventListener('click', () => {
-                this.hideErrorModal();
-            });
+        const errorClose = this.elements.errorClose;
+        if (errorClose) {
+            errorClose.addEventListener('click', () => this.hideErrorModal());
         }
 
         // Permission grant button
-        if (this.elements.permissionGrant) {
-            console.log('Permission button found, adding listener');
-            this.elements.permissionGrant.addEventListener('click', () => {
+        const permissionBtn = this.elements.permissionGrant;
+        if (permissionBtn) {
+            console.log('Permission button found');
+            permissionBtn.addEventListener('click', async () => {
                 console.log('Permission button clicked!');
-                this.requestPermissions();
+                await this.requestPermissions();
             });
         } else {
             console.error('Permission button NOT found!');
@@ -170,13 +176,19 @@ class OjosParaCiegoApp {
         this.showLoading();
 
         try {
+            if (!this.cameraManager) {
+                throw new Error('CameraManager no inicializado');
+            }
+
             console.log('Initializing camera...');
             await this.cameraManager.initialize();
             console.log('Camera initialized');
 
-            console.log('Connecting WebSocket...');
-            this.wsManager.connect();
-            console.log('WebSocket connecting');
+            if (this.wsManager) {
+                console.log('Connecting WebSocket...');
+                this.wsManager.connect();
+                console.log('WebSocket connecting');
+            }
 
             this.state.hasPermissions = true;
             this.hidePermissionModal();
@@ -186,7 +198,7 @@ class OjosParaCiegoApp {
         } catch (error) {
             console.error('Permission error:', error);
             this.hidePermissionModal();
-            this.showError('No se pudo acceder a la cámara: ' + error.message);
+            this.showError('Error: ' + (error.message || 'No se pudo acceder a la cámara'));
         } finally {
             this.hideLoading();
         }

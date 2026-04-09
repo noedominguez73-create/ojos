@@ -2,7 +2,7 @@
  * Service Worker for OjosParaCiego PWA
  */
 
-const CACHE_NAME = 'ojosparaciego-v4';
+const CACHE_NAME = 'ojosparaciego-v5';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -59,6 +59,11 @@ self.addEventListener('activate', (event) => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
+    // Only handle http and https requests (skip chrome-extension, etc.)
+    if (!(event.request.url.indexOf('http') === 0)) {
+        return;
+    }
+
     // Skip WebSocket requests
     if (event.request.url.includes('/ws')) {
         return;

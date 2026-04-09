@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     # Vision settings
     vision_provider: str = "google"  # "google" or "together"
-    vision_model: str = "gemini-1.5-flash"  # or "gemini-1.5-pro"
+    vision_model: str = "gemini-2.0-flash"  # Google Gemini
     max_tokens: int = 300
 
     # TTS settings

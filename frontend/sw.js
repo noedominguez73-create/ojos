@@ -2,7 +2,7 @@
  * Service Worker for OjosParaCiego PWA
  */
 
-const CACHE_NAME = 'ojosparaciego-v1';
+const CACHE_NAME = 'ojosparaciego-v2';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',

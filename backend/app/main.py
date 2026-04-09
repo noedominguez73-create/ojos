@@ -81,6 +81,21 @@ async def serve_index():
     return {"status": "ok", "message": "OjosParaCiego API running"}
 
 
+@app.get("/ajustes.html")
+async def serve_ajustes():
+    return FileResponse(STATIC_DIR / "ajustes.html")
+
+
+@app.get("/galeria.html")
+async def serve_galeria():
+    return FileResponse(STATIC_DIR / "galeria.html")
+
+
+@app.get("/dispositivo.html")
+async def serve_dispositivo():
+    return FileResponse(STATIC_DIR / "dispositivo.html")
+
+
 # Mount static files (CSS, JS, etc.) - must be after specific routes
 if STATIC_DIR.exists():
     app.mount("/css", StaticFiles(directory=STATIC_DIR / "css"), name="css")

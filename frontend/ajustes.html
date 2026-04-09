@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="description" content="Asistente visual para personas ciegas - Ajustes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <title>OjosParaCiego - Ajustes</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png"
+        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header" role="banner">
+            <h1 id="view-title">Ajustes</h1>
+        </header>
+
+        <!-- Main content -->
+        <main class="main-content" role="main">
+            <!-- VIEW: SETTINGS -->
+            <section id="view-settings" class="tab-view active-view">
+                <div class="card">
+                    <h3><i class="fa-solid fa-video"></i> Cámara</h3>
+                    <p class="card-subtitle">Selecciona la cámara a utilizar (USB o integrada)</p>
+                    <select id="camera-select" class="text-input">
+                        <option value="">Cargando cámaras...</option>
+                    </select>
+                    <p id="camera-status" class="slider-subtext">Detectando cámaras disponibles...</p>
+                </div>
+
+                <div class="card">
+                    <h3>Clave para activar</h3>
+                    <p class="card-subtitle">API Keys de Gemini</p>
+                    <input type="text" class="text-input" placeholder="Ingresa tu API Key">
+                    <button class="small-btn mt-2">Guardar</button>
+                </div>
+
+                <div class="card">
+                    <h3>Asistencia Visual</h3>
+                    <div class="list-item">
+                        <span>Activar automáticamente</span>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="switch-slider round"></span>
+                        </label>
+                    </div>
+
+                    <h4 class="mt-3">Volumen de dispositivo</h4>
+                    <div class="slider-container">
+                        <input type="range" class="slider" min="0" max="100" value="75">
+                    </div>
+                    <p class="slider-subtext">Selecciona un nivel de volumen</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-btn">
+                <i class="fa-solid fa-eye"></i>
+                <span>Control</span>
+            </a>
+            <a href="galeria.html" class="nav-btn">
+                <i class="fa-solid fa-images"></i>
+                <span>Galería</span>
+            </a>
+            <a href="dispositivo.html" class="nav-btn">
+                <i class="fa-solid fa-mobile-screen"></i>
+                <span>Dispositivo</span>
+            </a>
+            <a href="ajustes.html" class="nav-btn active">
+                <i class="fa-solid fa-gear"></i>
+                <span>Ajustes</span>
+            </a>
+        </nav>
+    </div>
+
+    <script src="js/camera.js"></script>
+    <script>
+        // Initialize camera selector
+        document.addEventListener('DOMContentLoaded', async () => {
+            const select = document.getElementById('camera-select');
+            const status = document.getElementById('camera-status');
+            const cameraManager = new CameraManager();
+
+            try {
+                const cameras = await cameraManager.listCameras();
+
+                if (cameras.length === 0) {
+                    select.innerHTML = '<option value="">No se detectaron cámaras</option>';
+                    status.textContent = 'Conecta una cámara USB o permite el acceso a la cámara';
+                    return;
+                }
+
+                // Populate select with cameras
+                select.innerHTML = cameras.map(camera =>
+                    `<option value="${camera.deviceId}" ${camera.deviceId === cameraManager.selectedDeviceId ? 'selected' : ''}>
+                        ${camera.label}
+                    </option>`
+                ).join('');
+
+                // Add default option at the beginning
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Cámara por defecto del sistema';
+                select.insertBefore(defaultOption, select.firstChild);
+
+                // Set selected value
+                if (!cameraManager.selectedDeviceId) {
+                    select.value = '';
+                }
+
+                status.textContent = `${cameras.length} cámara(s) detectada(s)`;
+
+                // Handle camera selection change
+                select.addEventListener('change', async (e) => {
+                    const deviceId = e.target.value;
+                    cameraManager.saveSelectedCamera(deviceId);
+
+                    const selectedCamera = cameras.find(c => c.deviceId === deviceId);
+                    status.textContent = deviceId
+                        ? `Cámara seleccionada: ${selectedCamera?.label || 'Desconocida'}`
+                        : 'Usando cámara por defecto del sistema';
+                });
+
+            } catch (error) {
+                console.error('Error loading cameras:', error);
+                select.innerHTML = '<option value="">Error al cargar cámaras</option>';
+                status.textContent = 'Permite el acceso a la cámara e intenta de nuevo';
+            }
+        });
+    </script>
+</body>
+
+</html>

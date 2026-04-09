@@ -1,20 +1,21 @@
 /**
  * Camera Manager for OjosParaCiego
  * Handles camera access and frame capture
+ * Supports USB cameras and device selection
  */
 
 class CameraManager {
     constructor() {
         this.video = document.getElementById('camera-preview');
         this.canvas = document.getElementById('capture-canvas');
-        this.context = this.canvas.getContext('2d');
+        this.context = this.canvas ? this.canvas.getContext('2d') : null;
         this.stream = null;
         this.isInitialized = false;
+        this.selectedDeviceId = null;
 
         // Camera settings - Higher resolution for better detection
         this.constraints = {
             video: {
-                facingMode: 'user', // Front camera
                 width: { ideal: 1280 },
                 height: { ideal: 720 },
                 frameRate: { ideal: 15 }
@@ -26,6 +27,51 @@ class CameraManager {
         this.captureWidth = 1280;
         this.captureHeight = 720;
         this.jpegQuality = 0.85;
+
+        // Load saved camera preference
+        this.loadSavedCamera();
+    }
+
+    loadSavedCamera() {
+        const savedDeviceId = localStorage.getItem('selectedCameraId');
+        if (savedDeviceId) {
+            this.selectedDeviceId = savedDeviceId;
+        }
+    }
+
+    saveSelectedCamera(deviceId) {
+        localStorage.setItem('selectedCameraId', deviceId);
+        this.selectedDeviceId = deviceId;
+    }
+
+    async listCameras() {
+        try {
+            // Request permission first to get device labels
+            const tempStream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const cameras = devices.filter(device => device.kind === 'videoinput');
+
+            // Stop the temporary stream
+            tempStream.getTracks().forEach(track => track.stop());
+
+            return cameras.map(camera => ({
+                deviceId: camera.deviceId,
+                label: camera.label || `Cámara ${cameras.indexOf(camera) + 1}`
+            }));
+        } catch (error) {
+            console.error('Error listing cameras:', error);
+            return [];
+        }
+    }
+
+    setCamera(deviceId) {
+        this.saveSelectedCamera(deviceId);
+        if (this.isInitialized) {
+            // Reinitialize with new camera
+            this.stop();
+            this.initialize();
+        }
     }
 
     async initialize() {
@@ -39,8 +85,19 @@ class CameraManager {
                 throw new Error('Camera API not supported');
             }
 
+            // Build constraints based on selected camera
+            const constraints = { ...this.constraints };
+
+            if (this.selectedDeviceId) {
+                // Use specific camera by deviceId (USB camera or selected device)
+                constraints.video = {
+                    ...constraints.video,
+                    deviceId: { exact: this.selectedDeviceId }
+                };
+            }
+
             // Request camera access
-            this.stream = await navigator.mediaDevices.getUserMedia(this.constraints);
+            this.stream = await navigator.mediaDevices.getUserMedia(constraints);
 
             // Set video source
             this.video.srcObject = this.stream;
@@ -115,13 +172,18 @@ class CameraManager {
     }
 
     async switchCamera() {
-        // Toggle between front and back camera
-        const currentFacing = this.constraints.video.facingMode;
-        this.constraints.video.facingMode = currentFacing === 'user' ? 'environment' : 'user';
+        // Get list of cameras and switch to next one
+        const cameras = await this.listCameras();
+        if (cameras.length <= 1) {
+            console.log('Only one camera available');
+            return;
+        }
 
-        // Reinitialize with new camera
-        this.stop();
-        await this.initialize();
+        const currentIndex = cameras.findIndex(c => c.deviceId === this.selectedDeviceId);
+        const nextIndex = (currentIndex + 1) % cameras.length;
+        const nextCamera = cameras[nextIndex];
+
+        this.setCamera(nextCamera.deviceId);
     }
 
     isReady() {
@@ -133,8 +195,14 @@ class CameraManager {
             initialized: this.isInitialized,
             width: this.video?.videoWidth || 0,
             height: this.video?.videoHeight || 0,
-            facingMode: this.constraints.video.facingMode
+            selectedDeviceId: this.selectedDeviceId
         };
+    }
+
+    async getCurrentCameraLabel() {
+        const cameras = await this.listCameras();
+        const current = cameras.find(c => c.deviceId === this.selectedDeviceId);
+        return current ? current.label : 'Cámara por defecto';
     }
 }
 

@@ -140,5 +140,15 @@ class VisionService:
             return response_text
 
         except Exception as e:
-            logger.error(f"Vision analysis error: {e}")
-            return "Error al analizar"
+            error_msg = str(e)
+            logger.error(f"Vision analysis error: {error_msg}")
+
+            # Provide more specific error messages
+            if "api_key" in error_msg.lower() or "unauthorized" in error_msg.lower():
+                return "Error: API key inválida"
+            elif "rate" in error_msg.lower() or "limit" in error_msg.lower():
+                return "Error: Límite de API excedido"
+            elif "model" in error_msg.lower():
+                return "Error: Modelo no disponible"
+            else:
+                return f"Error al analizar: {error_msg[:50]}"

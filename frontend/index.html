@@ -1,24 +1,29 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#1a1a2e">
+    <meta name="theme-color" content="#ffffff">
     <meta name="description" content="Asistente visual para personas ciegas">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-    <title>OjosParaCiego</title>
+    <title>OjosParaCiego - Control</title>
 
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <link rel="icon" type="image/png"
+        href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
     <link rel="stylesheet" href="css/styles.css">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body>
     <div id="app">
         <!-- Header -->
         <header class="header" role="banner">
-            <h1>OjosParaCiego</h1>
+            <h1 id="view-title">Asistencia Visual</h1>
             <div id="connection-status" class="status disconnected" aria-live="polite">
                 Desconectado
             </div>
@@ -26,48 +31,47 @@
 
         <!-- Main content -->
         <main class="main-content" role="main">
-            <!-- Camera preview (hidden but functional) -->
-            <div class="camera-container" aria-hidden="true">
+            <!-- Camera preview -->
+            <div class="camera-container">
                 <video id="camera-preview" autoplay playsinline muted></video>
                 <canvas id="capture-canvas"></canvas>
             </div>
 
-            <!-- Status display -->
-            <section class="status-section" aria-live="polite" aria-atomic="true">
-                <div id="current-mode" class="mode-display">
-                    Modo: <span id="mode-text">Inactivo</span>
+            <!-- VIEW: CONTROL -->
+            <section id="view-control" class="tab-view active-view">
+                <div class="control-wrapper">
+                    <p class="instruction-text">Toca el botón para empezar con tu inteligencia artificial</p>
+
+                    <div id="current-mode" class="mode-display">
+                        <span id="mode-text">Inactivo</span>
+                    </div>
+
+                    <button id="btn-navigation" class="giant-assist-btn" aria-label="Activar asistencia visual">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <p class="btn-subtext">Activar asistencia</p>
                 </div>
-                <div id="last-response" class="response-display">
-                    <p id="response-text">Toca el botón para comenzar</p>
+
+                <!-- Status/Response display -->
+                <div class="response-wrapper">
+                    <div id="last-response" class="response-display">
+                        <p id="response-text">Esperando acción...</p>
+                    </div>
+
+                    <button id="btn-stop" class="control-btn stop-btn hidden" aria-label="Detener">
+                        <i class="fa-solid fa-stop"></i> Detener
+                    </button>
                 </div>
-            </section>
 
-            <!-- Control buttons -->
-            <section class="controls-section">
-                <button id="btn-navigation" class="control-btn primary-btn" aria-label="Iniciar modo navegación">
-                    <span class="btn-icon">🚶</span>
-                    <span class="btn-text">Navegación</span>
-                </button>
-
-                <button id="btn-search" class="control-btn secondary-btn" aria-label="Buscar objeto por voz">
-                    <span class="btn-icon">🔍</span>
-                    <span class="btn-text">Buscar</span>
-                </button>
-
-                <button id="btn-analyze" class="control-btn tertiary-btn" aria-label="Analizar escena actual">
-                    <span class="btn-icon">📷</span>
-                    <span class="btn-text">Analizar</span>
-                </button>
-
-                <button id="btn-stop" class="control-btn stop-btn hidden" aria-label="Detener">
-                    <span class="btn-icon">⏹</span>
-                    <span class="btn-text">Detener</span>
-                </button>
-
-                <button id="btn-disconnect" class="control-btn disconnect-btn" aria-label="Desconectar">
-                    <span class="btn-icon">🔌</span>
-                    <span class="btn-text">Desconectar</span>
-                </button>
+                <!-- Secondary actions -->
+                <div class="secondary-actions">
+                    <button id="btn-search" class="icon-btn" aria-label="Buscar objeto por voz">
+                        <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                    </button>
+                    <button id="btn-analyze" class="icon-btn" aria-label="Analizar escena actual">
+                        <i class="fa-solid fa-camera"></i> Analizar
+                    </button>
+                </div>
             </section>
 
             <!-- Voice input indicator -->
@@ -76,6 +80,26 @@
                 <span>Escuchando...</span>
             </div>
         </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-btn active">
+                <i class="fa-solid fa-eye"></i>
+                <span>Control</span>
+            </a>
+            <a href="galeria.html" class="nav-btn">
+                <i class="fa-solid fa-images"></i>
+                <span>Galería</span>
+            </a>
+            <a href="dispositivo.html" class="nav-btn">
+                <i class="fa-solid fa-mobile-screen"></i>
+                <span>Dispositivo</span>
+            </a>
+            <a href="ajustes.html" class="nav-btn">
+                <i class="fa-solid fa-gear"></i>
+                <span>Ajustes</span>
+            </a>
+        </nav>
 
         <!-- Audio player (hidden) -->
         <audio id="audio-player" aria-hidden="true"></audio>
@@ -100,11 +124,11 @@
             <div class="modal-content">
                 <h2 id="permission-title">Permisos necesarios</h2>
                 <p>Esta aplicación necesita acceso a:</p>
-                <ul>
-                    <li>📷 Cámara (para detectar obstáculos)</li>
-                    <li>🎤 Micrófono (para comandos de voz)</li>
+                <ul class="permission-list">
+                    <li><i class="fa-solid fa-camera"></i> Cámara (para detectar obstáculos)</li>
+                    <li><i class="fa-solid fa-microphone"></i> Micrófono (para comandos de voz)</li>
                 </ul>
-                <button id="permission-grant" class="modal-btn primary">Permitir acceso</button>
+                <button id="permission-grant" class="modal-btn primary full-width-btn">Permitir acceso</button>
             </div>
         </div>
     </div>
@@ -123,4 +147,5 @@
         }
     </script>
 </body>
+
 </html>
